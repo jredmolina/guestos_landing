@@ -24,7 +24,10 @@
         "NEXT_PUBLIC_\\*",
         "STYTCH_\\*",
         "GOOGLE_MAP_KEY",
-        "SURVEYJS_LICENSE_KEY"
+        "SURVEYJS_LICENSE_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "RESEND_API_KEY",
+        "NOTIF_RECEIVE_EMAIL"
       ],
       "cache": true,
       "inputs": [

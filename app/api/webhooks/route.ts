@@ -3,7 +3,7 @@ import { Stripe } from 'stripe';
 import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
