@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Script from 'next/script';
-import React, { useRef } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import useIsMobile from '@/hooks/use-is-mobile';
-import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
-import ContactForm from './components/ContactForm';
+import Script from "next/script";
+import React, { useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import useIsMobile from "@/hooks/use-is-mobile";
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
+import ContactForm from "./components/ContactForm";
 // import ContactMethods from './components/ContactMethods';
 // import SupportOptions from './components/SupportOptions';
 
@@ -16,8 +16,8 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.15,
-      when: 'beforeChildren',
-      ease: 'easeInOut',
+      when: "beforeChildren",
+      ease: "easeInOut",
       duration: 0.5,
     },
   },
@@ -52,7 +52,7 @@ const particleVariants = {
       duration: custom.duration,
       delay: custom.delay,
       repeat: Infinity,
-      ease: 'linear',
+      ease: "linear",
     },
   }),
 };
@@ -72,7 +72,7 @@ export default function ContactPage() {
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {/* Grid pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black_50%,transparent_90%)]" />
-          
+
           {/* Gradient overlays */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(255,200,87,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,rgba(255,87,87,0.1),transparent_50%)]" />
@@ -104,7 +104,7 @@ export default function ContactPage() {
           className="relative z-10 flex min-h-screen flex-col"
         >
           <Navbar isFixed={false} />
-          
+
           <div className="flex-grow px-4 py-24 sm:px-6 lg:px-8">
             <motion.div
               variants={itemVariants}
@@ -120,8 +120,9 @@ export default function ContactPage() {
                 Let's Start a Conversation
               </h1>
               <p className="mt-6 text-lg leading-8 text-neutral-400">
-                Have questions about our services? Want to learn more about how we can help?
-                We're here to help and answer any question you might have.
+                Have questions about our services? Want to learn more about how
+                we can help? We're here to help and answer any question you
+                might have.
               </p>
             </motion.div>
 
