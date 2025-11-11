@@ -113,14 +113,75 @@ export default function ContactForm() {
 
   const shouldShowCompanyField = isCommonEmailProvider(formState.email);
 
+  // Format phone number to E.164 international format
+  const formatPhoneForInternational = (phone: string) => {
+    if (!phone) return "";
+
+    // Remove all non-digit characters
+    const digitsOnly = phone.replace(/\D/g, "");
+
+    // If it's empty after removing non-digits, return empty
+    if (!digitsOnly) return "";
+
+    // If it already starts with +, just clean it up
+    if (phone.trim().startsWith("+")) {
+      return "+" + digitsOnly;
+    }
+    // If it starts with 1 and has 11 digits (US/Canada format), add +
+    if (digitsOnly.startsWith("1") && digitsOnly.length === 11) {
+      return "+" + digitsOnly;
+    }
+
+    // If it's 10 digits (US/Canada without country code), add +1
+    if (digitsOnly.length === 10) {
+      return "+1" + digitsOnly;
+    }
+
+    // Otherwise, assume it needs +1 (US default)
+    return "+1" + digitsOnly;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // TODO: Implement form submission logic
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Build URL parameters for Cal.com
+    const params = new URLSearchParams();
 
-    setIsSubmitting(false);
+    if (formState.name) {
+      params.append("name", formState.name);
+    }
+
+    if (formState.email) {
+      params.append("email", formState.email);
+    }
+
+    if (formState.phone) {
+      const internationalPhone = formatPhoneForInternational(formState.phone);
+      if (internationalPhone) {
+        params.append("attendeePhoneNumber", internationalPhone);
+      }
+    }
+
+    // Add company info - either from company field or extracted from email domain
+    if (shouldShowCompanyField && formState.company) {
+      params.append("company", formState.company);
+    } else if (!shouldShowCompanyField && formState.email) {
+      // Extract company from email domain
+      const domain = formState.email.split("@")[1];
+      if (domain) {
+        const companyName = domain
+          .replace(/\.(com|net|org|io|ai|co|app)$/i, "")
+          .split(".")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        params.append("company", companyName);
+      }
+    }
+
+    // Redirect to Cal.com with parameters
+    const calUrl = `https://cal.com/guestos/guestos-onboarding-meeting?${params.toString()}`;
+    window.location.href = calUrl;
   };
 
   return (
@@ -219,35 +280,6 @@ export default function ContactForm() {
             />
           </motion.div>
 
-          {/* Phone Field */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2 * 0.1 }}
-            className="space-y-2"
-          >
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-neutral-300"
-            >
-              Phone
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="Enter your phone number (optional)"
-              value={formState.phone}
-              onChange={(e) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  phone: e.target.value,
-                }))
-              }
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
-            />
-          </motion.div>
-
           {/* Conditional Company Field */}
           {shouldShowCompanyField && (
             <motion.div
@@ -281,6 +313,35 @@ export default function ContactForm() {
               />
             </motion.div>
           )}
+
+          {/* Phone Field */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2 * 0.1 }}
+            className="space-y-2"
+          >
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-neutral-300"
+            >
+              Phone
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="Enter your phone number (optional)"
+              value={formState.phone}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  phone: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
+            />
+          </motion.div>
         </div>
 
         <motion.div
@@ -296,7 +357,7 @@ export default function ContactForm() {
             className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary-gold to-primary-gold py-3 text-white shadow-lg shadow-primary-gold/20"
           >
             <span className="relative z-10">
-              {isSubmitting ? "Sending..." : "Book Meeting"}
+              {isSubmitting ? "Sending..." : "Schedule Meeting"}
             </span>
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-primary-gold via-white/10 to-primary-gold opacity-0 transition-opacity duration-300 group-hover:opacity-100"
