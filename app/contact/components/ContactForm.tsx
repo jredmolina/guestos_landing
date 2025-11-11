@@ -1,49 +1,35 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 const formFields = [
   {
-    id: 'name',
-    label: 'Name',
-    type: 'text',
-    placeholder: 'Enter your name',
+    id: "name",
+    label: "Name",
+    type: "text",
+    placeholder: "Enter your name",
     required: true,
   },
   {
-    id: 'email',
-    label: 'Email',
-    type: 'email',
-    placeholder: 'Enter your email',
+    id: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "Enter your email",
     required: true,
   },
   {
-    id: 'phone',
-    label: 'Phone',
-    type: 'tel',
-    placeholder: 'Enter your phone number (optional)',
+    id: "phone",
+    label: "Phone",
+    type: "tel",
+    placeholder: "Enter your phone number (optional)",
     required: false,
   },
   {
-    id: 'company',
-    label: 'Company',
-    type: 'text',
-    placeholder: 'Enter your company name (optional)',
-    required: false,
-  },
-  {
-    id: 'subject',
-    label: 'Subject',
-    type: 'text',
-    placeholder: 'What is this regarding?',
-    required: true,
-  },
-  {
-    id: 'message',
-    label: 'Message',
-    type: 'textarea',
-    placeholder: 'How can we help you?',
+    id: "company",
+    label: "Company",
+    type: "text",
+    placeholder: "Enter your company name",
     required: true,
   },
 ];
@@ -66,8 +52,8 @@ const contactInfo = [
         />
       </svg>
     ),
-    label: 'Email us at',
-    value: 'jessie@guestos.ai',
+    label: "Email us at",
+    value: "jessie@guestos.ai",
   },
   {
     icon: (props: any) => (
@@ -86,30 +72,116 @@ const contactInfo = [
         />
       </svg>
     ),
-    label: 'Call my GuestOS Concierge at',
-    value: '+1 (831) 282-2349',
+    label: "Call my GuestOS Concierge at",
+    value: "+1 (831) 282-2349",
   },
 ];
 
 export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    subject: '',
-    message: '',
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
   });
+
+  // Common email providers that would require company name
+  const commonEmailProviders = [
+    "gmail.com",
+    "yahoo.com",
+    "hotmail.com",
+    "outlook.com",
+    "icloud.com",
+    "aol.com",
+    "protonmail.com",
+    "proton.me",
+    "mail.com",
+    "zoho.com",
+    "yandex.com",
+    "live.com",
+    "msn.com",
+    "hey.com",
+  ];
+
+  // Check if email is from a common provider
+  const isCommonEmailProvider = (email: string) => {
+    if (!email || !email.includes("@")) return false;
+    const domain = email.split("@")[1]?.toLowerCase();
+    return commonEmailProviders.includes(domain);
+  };
+
+  const shouldShowCompanyField = isCommonEmailProvider(formState.email);
+
+  // Format phone number to E.164 international format
+  const formatPhoneForInternational = (phone: string) => {
+    if (!phone) return "";
+
+    // Remove all non-digit characters
+    const digitsOnly = phone.replace(/\D/g, "");
+
+    // If it's empty after removing non-digits, return empty
+    if (!digitsOnly) return "";
+
+    // If it already starts with +, just clean it up
+    if (phone.trim().startsWith("+")) {
+      return "+" + digitsOnly;
+    }
+    // If it starts with 1 and has 11 digits (US/Canada format), add +
+    if (digitsOnly.startsWith("1") && digitsOnly.length === 11) {
+      return "+" + digitsOnly;
+    }
+
+    // If it's 10 digits (US/Canada without country code), add +1
+    if (digitsOnly.length === 10) {
+      return "+1" + digitsOnly;
+    }
+
+    // Otherwise, assume it needs +1 (US default)
+    return "+1" + digitsOnly;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // TODO: Implement form submission logic
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Build URL parameters for Cal.com
+    const params = new URLSearchParams();
 
-    setIsSubmitting(false);
+    if (formState.name) {
+      params.append("name", formState.name);
+    }
+
+    if (formState.email) {
+      params.append("email", formState.email);
+    }
+
+    if (formState.phone) {
+      const internationalPhone = formatPhoneForInternational(formState.phone);
+      if (internationalPhone) {
+        params.append("attendeePhoneNumber", internationalPhone);
+      }
+    }
+
+    // Add company info - either from company field or extracted from email domain
+    if (shouldShowCompanyField && formState.company) {
+      params.append("company", formState.company);
+    } else if (!shouldShowCompanyField && formState.email) {
+      // Extract company from email domain
+      const domain = formState.email.split("@")[1];
+      if (domain) {
+        const companyName = domain
+          .replace(/\.(com|net|org|io|ai|co|app)$/i, "")
+          .split(".")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        params.append("company", companyName);
+      }
+    }
+
+    // Redirect to Cal.com with parameters
+    const calUrl = `https://cal.com/guestos/guestos-onboarding-meeting?${params.toString()}`;
+    window.location.href = calUrl;
   };
 
   return (
@@ -145,95 +217,132 @@ export default function ContactForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-6 sm:grid-cols-2">
-          {formFields.slice(0, 4).map((field, index) => (
+        <div className="grid gap-6 sm:grid-cols-1">
+          {/* Name Field */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0 * 0.1 }}
+            className="space-y-2"
+          >
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-neutral-300"
+            >
+              Name
+              <span className="ml-1 text-primary-gold">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              placeholder="Enter your name"
+              value={formState.name}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
+            />
+          </motion.div>
+
+          {/* Email Field */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 * 0.1 }}
+            className="space-y-2"
+          >
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-neutral-300"
+            >
+              Email
+              <span className="ml-1 text-primary-gold">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="Enter your email"
+              value={formState.email}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
+            />
+          </motion.div>
+
+          {/* Conditional Company Field */}
+          {shouldShowCompanyField && (
             <motion.div
-              key={field.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: 3 * 0.1 }}
               className="space-y-2"
             >
               <label
-                htmlFor={field.id}
+                htmlFor="company"
                 className="block text-sm font-medium text-neutral-300"
               >
-                {field.label}
-                {field.required && (
-                  <span className="ml-1 text-primary-gold">*</span>
-                )}
+                Company
+                <span className="ml-1 text-primary-gold">*</span>
               </label>
               <input
-                type={field.type}
-                id={field.id}
-                name={field.id}
-                required={field.required}
-                placeholder={field.placeholder}
-                value={formState[field.id as keyof typeof formState]}
+                type="text"
+                id="company"
+                name="company"
+                required={shouldShowCompanyField}
+                placeholder="Enter your company name"
+                value={formState.company}
                 onChange={(e) =>
                   setFormState((prev) => ({
                     ...prev,
-                    [field.id]: e.target.value,
+                    company: e.target.value,
                   }))
                 }
                 className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
               />
             </motion.div>
-          ))}
-        </div>
+          )}
 
-        {formFields.slice(4).map((field, index) => (
+          {/* Phone Field */}
           <motion.div
-            key={field.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: (index + 4) * 0.1 }}
+            transition={{ delay: 2 * 0.1 }}
             className="space-y-2"
           >
             <label
-              htmlFor={field.id}
+              htmlFor="phone"
               className="block text-sm font-medium text-neutral-300"
             >
-              {field.label}
-              {field.required && (
-                <span className="ml-1 text-primary-gold">*</span>
-              )}
+              Phone
             </label>
-            {field.type === 'textarea' ? (
-              <textarea
-                id={field.id}
-                name={field.id}
-                required={field.required}
-                placeholder={field.placeholder}
-                rows={4}
-                value={formState[field.id as keyof typeof formState]}
-                onChange={(e) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    [field.id]: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
-              />
-            ) : (
-              <input
-                type={field.type}
-                id={field.id}
-                name={field.id}
-                required={field.required}
-                placeholder={field.placeholder}
-                value={formState[field.id as keyof typeof formState]}
-                onChange={(e) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    [field.id]: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
-              />
-            )}
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="Enter your phone number (optional)"
+              value={formState.phone}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  phone: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-white placeholder-neutral-500 shadow-sm backdrop-blur-sm transition-colors duration-300 focus:border-primary-gold/50 focus:outline-none focus:ring-1 focus:ring-primary-gold/50"
+            />
           </motion.div>
-        ))}
+        </div>
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -248,15 +357,11 @@ export default function ContactForm() {
             className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary-gold to-primary-gold py-3 text-white shadow-lg shadow-primary-gold/20"
           >
             <span className="relative z-10">
-              {isSubmitting ? 'Sending...' : 'Send Message'}
+              {isSubmitting ? "Sending..." : "Schedule Meeting"}
             </span>
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-primary-gold via-white/10 to-primary-gold opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              animate={
-                isSubmitting
-                  ? { x: ['0%', '100%'] }
-                  : { x: '0%' }
-              }
+              animate={isSubmitting ? { x: ["0%", "100%"] } : { x: "0%" }}
               transition={{
                 duration: 1.5,
                 repeat: isSubmitting ? Infinity : 0,
@@ -265,7 +370,7 @@ export default function ContactForm() {
           </motion.button>
 
           <p className="text-center text-sm text-neutral-400">
-            By submitting this form, you agree to our{' '}
+            By submitting this form, you agree to our{" "}
             <a href="/privacy" className="text-primary-gold hover:underline">
               Privacy Policy
             </a>
@@ -275,4 +380,4 @@ export default function ContactForm() {
       </form>
     </motion.div>
   );
-} 
+}
